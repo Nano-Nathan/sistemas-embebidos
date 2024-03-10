@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+
+<!-- <form name="form" id="form" action="{{ url_for('test') }}" method="post">
+  <input type="text" name="nombre" placeholder="Nombre">
+  <input type="email" name="correo" placeholder="Correo electrónico">
+  <input type="submit" value="Enviar">
+</form> -->
+
+<html>
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+      function updateBar(id, value) {
+        let bar = document.getElementById(id);
+        let text = document.getElementById('h_' + id);
+        
+        bar.value = bar.value + (10 * value);
+        text.textContent = `Led ${id} (${bar.value}%)`;
+    
+        //Envio los valores al back
+        $.ajax({
+          type: 'POST',
+          url: '/updateBar',
+          data: { id: id, value: bar.value },
+          success: () => {}
+        });
+      }
+    </script>
+</head>
+<body>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));justify-content: space-around;">
+      <center>
+        <h1 id="h_9">Led 9 (100%)</h1>
+        <button onclick="updateBar('9', -1)">-</button>
+        <progress id="9" value="100" max="100"></progress>
+        <button onclick="updateBar('9', 1)">+</button>
+      </center>
+      <center>
+        <h1 id="h_10">Led 10 (100%)</h1>
+        <button onclick="updateBar('10', -1)">-</button>
+        <progress id="10" value="100" max="100"></progress>
+        <button onclick="updateBar('10', 1)">+</button>
+      </center>
+      <center>
+        <h1 id="h_11">Led 11 (100%)</h1>
+        <button onclick="updateBar('11', -1)">-</button>
+        <progress id="11" value="100" max="100"></progress>
+        <button onclick="updateBar('11', 1)">+</button>
+      </center>
+    </div>
+</body>
+</html>
+
