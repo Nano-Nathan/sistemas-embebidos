@@ -7,13 +7,26 @@ from flask import request
 
 app = Flask(__name__)
 
-arduino = None
+arduino = serial.Serial(
+    '/dev/ttyACM0',
+    #'COM3',
+    baudrate=9600,
+    bytesize=serial.EIGHTBITS,
+    parity=serial.PARITY_NONE,
+    stopbits=serial.STOPBITS_ONE,
+    timeout=1,
+    xonxoff=False,
+    rtscts=False,
+    write_timeout=10,
+    dsrdtr=False,
+    inter_byte_timeout=None,
+    exclusive=None
+)
 
 @app.route('/', methods=['GET'])
 @app.route('/<param>', methods=['GET'])
 def index(param = None):
     arduino = serial.Serial(
-        port='/dev/ttyACM0',
         baudrate=9600,
         bytesize=serial.EIGHTBITS,
         parity=serial.PARITY_NONE,
@@ -31,18 +44,27 @@ def index(param = None):
 @app.route('/updateBar', methods = ['POST'])
 def updateBar ():
     id = request.form.get('id')
-    value = request.form.get('value')
+    value = 256 * request.form.get('value') / 100
 
     print(id, value)
     sendData()
 
     return ""
 
+b = True
 def sendData ():
+    global b
+
     if (arduino != None):
-        arduino.write(('Hola Arduino!').encode("utf-8"))
+        if b:
+            arduino.write(('1\n').encode("utf-8"))
+        else:
+            arduino.write(('0\n').encode("utf-8"))
+        
+        b = not b
+
         print("Datos enviados correctamente")
-        arduino.close()
+        #arduino.close()
     else:
         print("No se ha conectado a un arduino")
 
