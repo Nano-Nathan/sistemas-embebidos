@@ -19,6 +19,18 @@
           success: () => {}
         });
       }
+
+      function onOff(value) {
+        document.getElementById('h_13').textContent = `Led 13 - ${value == 0 ? 'Apagado' : 'Encendido'}`;
+    
+        //Envio los valores al back
+        $.ajax({
+          type: 'POST',
+          url: '/onOff',
+          data: { value: value },
+          success: () => {}
+        });
+      }
     </script>
 </head>
 <body>
@@ -40,6 +52,11 @@
         <button onclick="updateBar('11', -1)">-</button>
         <progress id="11" value="100" max="100"></progress>
         <button onclick="updateBar('11', 1)">+</button>
+      </center>
+      <center>
+        <h1 id="h_13">Led 13 - Apagado</h1>
+        <button onclick="onOff(1)">Encender</button>
+        <button onclick="onOff(0)">Apagar</button>
       </center>
     </div>
 </body>

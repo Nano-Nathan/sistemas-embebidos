@@ -5,6 +5,7 @@ void setup() {
   pinMode(9, OUTPUT);
   pinMode(10, OUTPUT);
   pinMode(11, OUTPUT);
+  pinMode(13, OUTPUT);
 }
 
 void loop() {
@@ -17,6 +18,10 @@ void loop() {
     //Acciones segun id led
     if (8 < idLed && idLed < 12) {
       analogWrite(idLed, value);
+    } else {
+      if (idLed == 13) {
+        digitalWrite(idLed, value);
+      }
     }
   }
 }

@@ -32,13 +32,26 @@ def index(param = None):
 @app.route('/updateBar', methods = ['POST'])
 def updateBar ():
     global arduino
-
     id = request.form.get('id') #Obtiene el numero de pin a actualizar
     value = 256 * int(request.form.get('value')) / 100 #Calcula el porcentaje de brillo del led
-    print (value)
+
     #Envia el dato al arduino si tuviese uno conectado
     if (arduino != None):
         arduino.write((id + '\n' + value + "\n").encode("utf-8"))
+        print("Datos enviados correctamente")
+    else:
+        print("No se ha conectado un arduino")
+    return ""
+
+@app.route('/onOff', methods = ['POST'])
+def onOff ():
+    global arduino
+    value = int(request.form.get('value')) #Obtiene si debe encender o apagar
+
+    print (value)
+    #Envia el dato al arduino si tuviese uno conectado
+    if (arduino != None):
+        arduino.write(('13\n' + value + "\n").encode("utf-8"))
         print("Datos enviados correctamente")
     else:
         print("No se ha conectado un arduino")
