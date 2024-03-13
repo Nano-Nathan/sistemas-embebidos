@@ -1,16 +1,22 @@
 void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(9600,SERIAL_8N1);
+  Serial.begin(9600, SERIAL_8N1);
 
-  pinMode(13, OUTPUT);
+  //Pins para controlar brillo
+  pinMode(9, OUTPUT);
+  pinMode(10, OUTPUT);
+  pinMode(11, OUTPUT);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  if(Serial.available()>0){
-    String string_recibido=Serial.readStringUntil('\n');
-    digitalWrite(13, string_recibido.toInt());
+  if(Serial.available() > 0){
+    //Lee el id del led
+    int idLed = Serial.readStringUntil('\n').toInt();
+    //Obtiene el valor para el led
+    int value = Serial.readStringUntil('\n').toInt();
 
-    analogWrite(13, string_recibido.toInt());
+    //Acciones segun id led
+    if (8 < idLed && idLed < 12) {
+      analogWrite(idLed, value);
+    }
   }
 }
