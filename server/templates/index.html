@@ -31,32 +31,47 @@
           success: () => {}
         });
       }
+
+      setInterval(() => {
+        //Obtiene los datos del arduino
+        $.ajax({
+          type: 'GET',
+          url: '/getSensorValue',
+          success: oResult => {
+            document.getElementById('h_A3').textContent = `Nivel de brillo detectado: ${oResult}`;
+          }
+        });
+      }, 1000);
+
     </script>
 </head>
 <body>
     <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));justify-content: space-around;">
       <center>
-        <h1 id="h_9">Led 9 (100%)</h1>
+        <h1 id="h_9">Led 9 (0%)</h1>
         <button onclick="updateBar('9', -1)">-</button>
-        <progress id="9" value="100" max="100"></progress>
+        <progress id="9" value="0" max="100"></progress>
         <button onclick="updateBar('9', 1)">+</button>
       </center>
       <center>
-        <h1 id="h_10">Led 10 (100%)</h1>
+        <h1 id="h_10">Led 10 (0%)</h1>
         <button onclick="updateBar('10', -1)">-</button>
-        <progress id="10" value="100" max="100"></progress>
+        <progress id="10" value="0" max="100"></progress>
         <button onclick="updateBar('10', 1)">+</button>
       </center>
       <center>
-        <h1 id="h_11">Led 11 (100%)</h1>
+        <h1 id="h_11">Led 11 (0%)</h1>
         <button onclick="updateBar('11', -1)">-</button>
-        <progress id="11" value="100" max="100"></progress>
+        <progress id="11" value="0" max="100"></progress>
         <button onclick="updateBar('11', 1)">+</button>
       </center>
       <center>
         <h1 id="h_13">Led 13 - Apagado</h1>
         <button onclick="onOff(1)">Encender</button>
         <button onclick="onOff(0)">Apagar</button>
+      </center>
+      <center>
+        <h1 id="h_A3"></h1>
       </center>
     </div>
 </body>
