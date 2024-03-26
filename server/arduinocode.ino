@@ -6,6 +6,8 @@ void setup() {
   pinMode(10, OUTPUT);
   pinMode(11, OUTPUT);
   pinMode(13, OUTPUT);
+
+  //Pin para captar el brillo
   pinMode(A3, INPUT);
 }
 
