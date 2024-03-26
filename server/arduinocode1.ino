@@ -4,7 +4,9 @@ TaskHandle_t xTaskHandle = NULL;
 
 //Variable que guarda la intensidad
 int brightness = 0;
-//Variable que 
+//Variable que avisa si la intensidad es mayor a 800
+boolean isMaxBrightness = 0;
+
 
 //codigo para tarea que lee la intensidad de los leds
 void readBrightness(){
@@ -13,6 +15,7 @@ void readBrightness(){
     taskENTER_CRITICAL();
     brightness = analogRead(A3);
     taskEXIT_CRITICAL();
+    isMaxBrightness = brightness > 799;
   }
 }
 
@@ -36,17 +39,23 @@ void writeBrightness(){
 //Metodo para hacer parpadear un led
 void blink (int id) {
   digitalWrite(id, HIGH);
+  vTaskDelay(1);
   digitalWrite(id, LOW);
 }
 
 //codigo para tarea que hace parpadear el led 12
 void blink12 () {
   //Calcula 0.5 segundos en tiks
-  float time = 500 / portTICK_PERIOD_MS;
+  float time = pdMS_TO_TICKS( 500 );
 
   for ( ;; ) {
+    //Valida el brillo maximo
+    if(isMaxBrightness){
+      vTaskSuspend();
+    }
+
     //Hace parpadear el led cada 0.5 seg
-    blink(12)
+    blink(12);
     vTaskDelay(time);
   }
 }
@@ -54,11 +63,11 @@ void blink12 () {
 //codigo para tarea que hace parpadear el led 11
 void blink11 () {
   //Calcula 1 segundos en tiks
-  float time = 1000 / portTICK_PERIOD_MS;
+  float time = pdMS_TO_TICKS( 1000 );
 
   for ( ;; ) {
     //Hace parpadear el led cada 1 seg
-    blink(11)
+    blink(11);
     vTaskDelay(time);
   }
 }
@@ -72,7 +81,8 @@ void setup() {
   //Manejador de las tareas
   TaskHandle_t xTaskReadBrightness = NULL,
     xTaskWriteBrightness = NULL,
-    xTaskBlink12 = NULL;
+    xTaskBlink12 = NULL,
+    xTaskBlink11 = NULL;
 
   //Pin para captar el brillo
   pinMode(A3, INPUT);
@@ -82,14 +92,17 @@ void setup() {
   pinMode(12, OUTPUT);
 
   //Crea la tarea que lee la intensidad del brillo (High Water Mark: 69)
-  xTaskCreate(readBrightness, "lectorIntensidad", 75, NULL, 0, &xTaskReadBrightness);
+  xTaskCreate(readBrightness, "lectorIntensidad", 128, NULL, 0, &xTaskReadBrightness);
 
   //Crea la tarea que escribe la intensidad del brillo (High Water Mark: 62)
-  xTaskCreate(writeBrightness, "escritorIntensidad", 70, NULL, 0, &xTaskWriteBrightness);
+  xTaskCreate(writeBrightness, "escritorIntensidad", 128, NULL, 0, &xTaskWriteBrightness);
 
   //Crea la tarea que hace parpadear el led 12 (High Water Mark: 89)
-  xTaskCreate(blink12, "parpadear12", 95, NULL, 0, &xTaskBlink12);
-
+  xTaskCreate(blink12, "parpadear12", 128, NULL, 0, &xTaskBlink12);
+  
+  //Crea la tarea que hace parpadear el led 12 (High Water Mark: 89)
+  xTaskCreate(blink11, "parpadear11", 128, NULL, 0, &xTaskBlink11);
+  
   // xTaskCreate(tarea,"miPrimeraTarea",1000,(void*)&pin,10,NULL);
   // xTaskCreate(TaskBlink, "Blink", 128, NULL, 0, NULL);
 }
