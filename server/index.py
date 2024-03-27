@@ -9,35 +9,41 @@ from flask import request
 
 app = Flask(__name__)
 
-arduino = serial.Serial(
-    '/dev/ttyACM0',
-    # 'COM3',
-    baudrate=9600,
-    bytesize=serial.EIGHTBITS,
-    parity=serial.PARITY_NONE,
-    stopbits=serial.STOPBITS_ONE,
-    timeout=1,
-    xonxoff=False,
-    rtscts=False,
-    write_timeout=10,
-    dsrdtr=False,
-    inter_byte_timeout=None,
-    exclusive=None
-)
+arduino = None
+# arduino = serial.Serial(
+#     '/dev/ttyACM0',
+#     # 'COM3',
+#     baudrate=9600,
+#     bytesize=serial.EIGHTBITS,
+#     parity=serial.PARITY_NONE,
+#     stopbits=serial.STOPBITS_ONE,
+#     timeout=1,
+#     xonxoff=False,
+#     rtscts=False,
+#     write_timeout=10,
+#     dsrdtr=False,
+#     inter_byte_timeout=None,
+#     exclusive=None
+# )
 
 
 
 #Thread para leer datos de un arduino
-readerSensor = 0
-def thread_method ():
-    global arduino, readerSensor
+def do_nothing ():
+    pass
+
+buffer = 0
+def thread_method (function=do_nothing):
+    global arduino, buffer
 
     #Actualiza el valor cada un segundo
     while (True):
         try:
             cadena = arduino.readline().decode("utf-8")
             if (cadena != ""):
-                readerSensor = cadena
+                buffer = cadena
+                #Ejecuta una acción custom si debiese
+                function()
         except:
             continue
 
@@ -88,16 +94,47 @@ def onOff ():
 #Ruta que retorna el valor del sensor
 @app.route('/getSensorValue', methods = ['GET'])
 def getSensorValue ():
-    global readerSensor
-    return (str)(readerSensor)
+    global buffer
+    return (str)(buffer)
 
 
 ################## METODOS TP2 ##############################
+brightness = 100
+more800 = True
+
+#Metodo a ejecutar en el thread que lee el buffer
+def to_do ():
+    global buffer, brightness, more800
+    #Si falla en la conversion del numero, significa que ha pasado o no la intensidad de 800
+    try:
+        brightness = int(buffer)
+    except ValueError as e:
+        more800 = (buffer == "active_12")
+
+    return render_template('TP2.html', brightness=brightness, more800=more800)
 
 @app.route('/', methods=['GET'])
 @app.route('/TP2', methods=['GET'])
 def tp2():
-    return render_template('TP2.html')
+    global brightness, more800
+    #Inicio el thread para leer los datos del arduino
+    # background_thread = threading.Thread(target=thread_method, args=(to_do,))
+    # background_thread.daemon = True  # Esto asegura que el hilo se detenga cuando la aplicación Flask se detenga
+    # background_thread.start()
+
+    return render_template('TP2.html', brightness=brightness, more800=more800)
+
+#Ruta que avisa detectar o no la luminosidad
+@app.route('/detect', methods = ['POST'])
+def detect ():
+    value = int(request.form.get('value'))
+    #Envia el dato al arduino si tuviese uno conectado
+    if (arduino != None):
+        arduino.write( ((str)(value) + "\n").encode("utf-8") )
+    else:
+        print("No se ha conectado un arduino")
+
+    return ""
 
 
 ################## METODOS TP3 ##############################

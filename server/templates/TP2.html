@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script>
+    function detect(value) {
+      //Envio los valores al back
+      $.ajax({
+        type: 'POST',
+        url: '/detect',
+        data: { value: value },
+        success: () => { }
+      });
+    }
+  </script>
+</head>
+
+<body>
+  <center>
+    <h1>La intensidad luminosidad detectada es: {{ brightness }}</h1>
+    <button onclick="detect(1)">Detectar</button>
+    <button onclick="detect(0)">No detectar</button>
+    <br>
+    {% if more800 %}
+    <center style="border:1px solid rgb(255, 136, 0);margin:10rem;margin-top:10px;margin-bottom: 10px;">
+      <h2 style="color:rgb(255, 136, 0);">¡¡ADVERTENCIA!!</h2>
+      <h2 style="color:rgb(255, 136, 0);">Se ha detectado una luminosidad mayor a 800.</h2>
+    </center>
+    {% endif %}
+  </center>
+</body>
+
+</html>
