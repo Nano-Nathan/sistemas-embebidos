@@ -113,7 +113,6 @@ def to_do ():
 
     return render_template('TP2.html', brightness=brightness, more800=more800)
 
-@app.route('/', methods=['GET'])
 @app.route('/TP2', methods=['GET'])
 def tp2():
     global brightness, more800
@@ -139,6 +138,7 @@ def detect ():
 
 ################## METODOS TP3 ##############################
 
+@app.route('/', methods=['GET'])
 @app.route('/TP3', methods=['GET'])
 def tp3():
     return render_template('TP3.html')
