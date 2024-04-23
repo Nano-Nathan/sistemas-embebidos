@@ -37,7 +37,8 @@ def thread_method (function=do_nothing):
     global arduino, buffer
 
     #Actualiza el valor cada un segundo
-    while (True):
+
+    while (True and (arduino != None)):
         try:
             cadena = arduino.readline().decode("utf-8")
             if (cadena != ""):
@@ -46,7 +47,6 @@ def thread_method (function=do_nothing):
                 function()
         except:
             continue
-
 
 ################## METODOS TP1 ##############################
 
@@ -99,8 +99,8 @@ def getSensorValue ():
 
 
 ################## METODOS TP2 ##############################
-brightness = 100
-more800 = True
+brightness = 0
+more800 = False
 
 #Metodo a ejecutar en el thread que lee el buffer
 def to_do ():
@@ -118,9 +118,9 @@ def to_do ():
 def tp2():
     global brightness, more800
     #Inicio el thread para leer los datos del arduino
-    # background_thread = threading.Thread(target=thread_method, args=(to_do,))
-    # background_thread.daemon = True  # Esto asegura que el hilo se detenga cuando la aplicación Flask se detenga
-    # background_thread.start()
+    background_thread = threading.Thread(target=thread_method, args=(to_do,))
+    background_thread.daemon = True  # Esto asegura que el hilo se detenga cuando la aplicación Flask se detenga
+    background_thread.start()
 
     return render_template('TP2.html', brightness=brightness, more800=more800)
 
