@@ -120,7 +120,16 @@ void blink (void * pvParameters) {
   }
 }
 
-
+//Metodo que termina o comienza la lectura de intensidad
+void interrupt() {
+  //Si se esta leyendo, deja de hacerlo
+  if (isReaderActive) {
+    Serial.println( "0\n" );
+  }
+  else {
+    Serial.println( "1\n" );
+  }
+}
 
 void setup() {
   static int id11 = 11, id12 = 12;
@@ -133,6 +142,12 @@ void setup() {
   //Pines que parpadearan
   pinMode(11, OUTPUT);
   pinMode(12, OUTPUT);
+
+  //Pulsador
+  pinMode(3, INPUT_PULLUP);
+
+  //Agrega evento de interrupción
+  attachInterrupt(digitalPinToInterrupt(3), interrupt, CHANGE);
 
   //Crea la tarea que lee la intensidad del brillo
   xTaskCreate(readBrightness, "lectorIntensidad", 128, NULL, 0, &xTaskReadBrightness);
