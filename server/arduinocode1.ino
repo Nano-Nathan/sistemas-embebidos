@@ -156,12 +156,12 @@ void setup() {
   xTaskCreate(readBuffer, "lectorBuffer", 128, NULL, 0, &xTaskReadBuffer);
 
   //Crea la tarea que escribe la intensidad del brillo
-  xTaskCreate(writeBrightness, "escritorIntensidad", 128, NULL, 0, &xTaskWriteBrightness);
+  xTaskCreate(writeBrightness, "escritorIntensidad", 128, NULL, 1, &xTaskWriteBrightness);
 
   //Crea la tarea que hace parpadear el led 11
-  xTaskCreate(blink, "parpadear11", 128, &id11, 0, &xTaskBlink11);
+  xTaskCreate(blink, "parpadear11", 128, &id11, 2, &xTaskBlink11);
   //Crea la tarea que hace parpadear el led 12
-  xTaskCreate(blink, "parpadear12", 128, &id12, 0, &xTaskBlink12);
+  xTaskCreate(blink, "parpadear12", 128, &id12, 2, &xTaskBlink12);
 }
 
 void loop() {}
