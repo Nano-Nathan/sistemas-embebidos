@@ -38,6 +38,7 @@ void readBrightness(){
       vTaskResume(xTaskBlink12);
     }
   }
+  vTaskDelete(NULL);
 }
 
 
@@ -52,6 +53,7 @@ void readBuffer () {
       }
     }
   }
+  vTaskDelete(NULL);
 }
 
 //codigo para tarea que escribe la intensidad de los leds
@@ -68,6 +70,7 @@ void writeBrightness(){
     Serial.println( brightness );
     taskEXIT_CRITICAL();
   }
+  vTaskDelete(NULL);
 }
 
 //Metodo para hacer parpadear un led
@@ -102,6 +105,7 @@ void blink (void * pvParameters) {
     digitalWrite(id, LOW);
     vTaskDelay(time);
   }
+  vTaskDelete(NULL);
 }
 
 //Método que termina la lectura de la luminosidad
@@ -111,7 +115,6 @@ void stopReading () {
   vTaskSuspend(xTaskBlink12);
   vTaskSuspend(xTaskWriteBrightness);
   vTaskSuspend(xTaskReadBrightness);
-  isReaderActive = false;
 }
 
 //Método que inicia la lectura de la luminosidad
@@ -120,14 +123,15 @@ void continueReading () {
   vTaskResume(xTaskWriteBrightness);
   vTaskResume(xTaskReadBrightness);
   vTaskSuspend(xTaskReadBuffer);
-  isReaderActive = true;
 }
 
 //Metodo que termina o comienza la lectura de intensidad
 void interrupt() {
   if (isReaderActive){
+    isReaderActive = false;
     stopReading();
   } else {
+    isReaderActive = true;
     continueReading();
   }
 }
@@ -145,10 +149,11 @@ void setup() {
   pinMode(12, OUTPUT);
 
   //Pulsador
-  pinMode(2, INPUT_PULLUP);
+  pinMode(3, INPUT);
 
   //Agrega evento de interrupción
-  attachInterrupt(digitalPinToInterrupt(2), interrupt, FALLING);
+  attachInterrupt(digitalPinToInterrupt(3), interrupt, FALLING);
+  // attachInterrupt(digitalPinToInterrupt(3), interrupt, RISING);
 
   //Crea la tarea que lee la intensidad del brillo
   xTaskCreate(readBrightness, "lectorIntensidad", 128, NULL, 0, &xTaskReadBrightness);
