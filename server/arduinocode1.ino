@@ -19,13 +19,9 @@ void readBrightness(){
     //Revisa si hay datos en el buffer, solo se envian ordenes para activar (1) o desactivar (0) la tarea
     if(Serial.available() > 0){
       buffer = Serial.readStringUntil('\n').toInt();
-      isReaderActive = (buffer == 1);
-    }
-
-    //Si no se esta leyendo la intensidad, suspende la tarea y activa la que espera la reactivacion
-    if(!isReaderActive){
-      vTaskResume(xTaskReadBuffer);
-      vTaskSuspend(xTaskReadBrightness);
+      if (buffer == 0) {
+        stopReading();
+      }
     }
 
     //La lectura es seccion critica
@@ -44,6 +40,7 @@ void readBrightness(){
   }
 }
 
+
 //codigo para leer el buffer y activar tarea
 void readBuffer () {
   for ( ;; ){
@@ -51,13 +48,7 @@ void readBuffer () {
     if(Serial.available() > 0){
       buffer = Serial.readStringUntil('\n').toInt();
       if(buffer == 1){
-        isReaderActive = true;
-        //Activa las tareas para leer la intensidad y encender el led
-        vTaskResume(xTaskReadBrightness);
-        vTaskResume(xTaskBlink11);
-
-        //Desactiva la tarea que lee el buffer
-        vTaskSuspend(xTaskReadBuffer);
+        continueReading();
       }
     }
   }
@@ -84,7 +75,7 @@ void blink (void * pvParameters) {
   //Obtengo el id del led a controlar
   int id = *(int*)pvParameters;
   //Boleano para no calcular al momento de comparaciones
-  boolean is11 = (id == 11);
+  boolean is12 = (id == 12);
 
   //Tendra el tiempo que demora en parpadear el led
   float time;
@@ -98,18 +89,11 @@ void blink (void * pvParameters) {
   }
 
   for ( ;; ) {
-    if(is11){
-      //Si no se esta leyendo la intensidad, suspende la tarea
-      if(!isReaderActive){
-        vTaskSuspend(xTaskBlink11);
-      }
-    } else {
-      //Si el brillo no supera 800, suspende la tarea y avisa a la aplicacion
-      if(!isMaxBrightness){
-        is12Active = false;
-        Serial.println( "suspend_12" );
-        vTaskSuspend(xTaskBlink12);
-      }
+    //Si el brillo no supera 800, avisa a la aplicacion y suspende la tarea
+    if(is12 && !isMaxBrightness){
+      is12Active = false;
+      Serial.println( "suspend_12" );
+      vTaskSuspend(xTaskBlink12);
     }
 
     //Hace parpadear el led
@@ -120,14 +104,31 @@ void blink (void * pvParameters) {
   }
 }
 
+//Método que termina la lectura de la luminosidad
+void stopReading () {
+  vTaskResume(xTaskReadBuffer);
+  vTaskSuspend(xTaskBlink11);
+  vTaskSuspend(xTaskBlink12);
+  vTaskSuspend(xTaskWriteBrightness);
+  vTaskSuspend(xTaskReadBrightness);
+  isReaderActive = false;
+}
+
+//Método que inicia la lectura de la luminosidad
+void continueReading () {
+  vTaskResume(xTaskBlink11);
+  vTaskResume(xTaskWriteBrightness);
+  vTaskResume(xTaskReadBrightness);
+  vTaskSuspend(xTaskReadBuffer);
+  isReaderActive = true;
+}
+
 //Metodo que termina o comienza la lectura de intensidad
 void interrupt() {
-  //Si se esta leyendo, deja de hacerlo
-  if (isReaderActive) {
-    Serial.println( "0\n" );
-  }
-  else {
-    Serial.println( "1\n" );
+  if (isReaderActive){
+    stopReading();
+  } else {
+    continueReading();
   }
 }
 
@@ -144,10 +145,10 @@ void setup() {
   pinMode(12, OUTPUT);
 
   //Pulsador
-  pinMode(3, INPUT_PULLUP);
+  pinMode(2, INPUT_PULLUP);
 
   //Agrega evento de interrupción
-  attachInterrupt(digitalPinToInterrupt(3), interrupt, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(2), interrupt, FALLING);
 
   //Crea la tarea que lee la intensidad del brillo
   xTaskCreate(readBrightness, "lectorIntensidad", 128, NULL, 0, &xTaskReadBrightness);
