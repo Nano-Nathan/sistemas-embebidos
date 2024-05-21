@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script>
+    function detect(value) {
+      //Envio los valores al back
+      $.ajax({
+        type: 'POST',
+        url: '/detect',
+        data: { value: value },
+        success: () => { }
+      });
+    }
+
+    function setTime (event) {
+        event.preventDefault();
+        const datetimeInput = document.getElementById('datetime').value;
+
+        if (datetimeInput) {
+            //Obtiene fecha y hora
+            let [date, time] = datetimeInput.split("T"),
+                [year, month, day] = date.split("-").map(e => parseInt(e)),
+                [hour, minutes] = time.split(":").map(e => parseInt(e));
+            
+            //Envia el dato al arduino
+            $.ajax({
+                type: 'POST',
+                url: '/sendTime',
+                data: { value: `0\n${day * 86400 + month * 2592000 + (year - 2000) * 31104000 + hour * 3600 + minutes * 60}\n` },
+                success: () => { document.getElementById('datetime').value = "" }
+            });
+        } else {
+            console.log('No date selected.');
+        }
+    }
+
+    //Metodo para obtener el tiempo del arduino
+    setInterval(() => {
+        $.ajax({
+          type: 'GET',
+          url: '/getTime',
+          success: oResult => {
+            document.getElementById('time').textContent = oResult;
+          }
+        });
+      }, 1000);
+  </script>
+</head>
+
+<body>
+  <center>
+    <h1 id="time"></h1>
+    <form onsubmit="return setTime(event)">
+        <label>Seleccione una fecha: </label>
+        <input type="datetime-local" id="datetime">
+        <button type="submit">Enviar</button>
+    </form>
+  </center>
+</body>
+
+</html>

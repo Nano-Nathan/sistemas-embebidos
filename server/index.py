@@ -37,7 +37,6 @@ def thread_method (function=do_nothing):
     global arduino, buffer
 
     #Actualiza el valor cada un segundo
-
     while (True and (arduino != None)):
         try:
             cadena = arduino.readline().decode("utf-8")
@@ -138,7 +137,32 @@ def detect ():
 
 ################## METODOS TP3 ##############################
 
+buffer = "23/04/24-00:00:00"
+
 @app.route('/', methods=['GET'])
 @app.route('/TP3', methods=['GET'])
 def tp3():
+    #Inicio el thread para leer los datos del arduino
+    background_thread = threading.Thread(target=thread_method)
+    background_thread.daemon = True  # Esto asegura que el hilo se detenga cuando la aplicación Flask se detenga
+    background_thread.start()
+
     return render_template('TP3.html')
+
+#Ruta que retorna el tiempo
+@app.route('/getTime', methods = ['GET'])
+def getTime ():
+    global buffer
+    return (str)(buffer)
+
+#Ruta que envia el dato al arduino
+@app.route('/sendTime', methods = ['POST'])
+def sendTime ():
+    value = request.form.get('value')
+    #Envia el dato al arduino si tuviese uno conectado
+    if (arduino != None):
+        arduino.write(value).encode("utf-8")
+    else:
+        print("No se ha conectado un arduino")
+
+    return ""
