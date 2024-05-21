@@ -6,7 +6,6 @@ TaskHandle_t xTaskUpdateTime = NULL;
 
 //Fecha inicial: 23/04/24
 long int time = 758851200;
-long int lastDate = 0;
 
 //Posicion de memoria
 int position = 2;
@@ -48,6 +47,7 @@ void toInt () {
     atoi(seconds);            //sec
 }
 
+//Código de la tarea que actualiza el contador
 void updateTime () {
   //Contador de tiks
   TickType_t xLastWakeTime = xTaskGetTickCount(), xTimeIncrement = pdMS_TO_TICKS(1000);
@@ -56,58 +56,58 @@ void updateTime () {
     //Aumenta el contador
     time++;
 
+    //Envia el dato
+    toString();
+    Serial.println(buffer_date);
+
     //Espera por un segundo
     vTaskDelayUntil(&xLastWakeTime, xTimeIncrement);
   }
+  vTaskDelete(NULL);
 }
 
+//Código de la interrupción que escribe en la EEPROM
 void writeDate () {
-  Serial.println("fecha a guardar: " + String(time));
-
-  Serial.println("escribe en: " + String(position));
-  // Escribir el valor en la EEPROM byte por byte
-  EEPROM.write(position, (byte)(time >> 24));
-  EEPROM.write(position + 1, (byte)(time >> 16));
-  EEPROM.write(position + 2, (byte)(time >> 8));
-  EEPROM.write(position + 3, (byte)time);
+  // Escribir el valor en la EEPROM
+  EEPROM.put(2, time);
 
   // Actualizar la posición de memoria para apuntar a la siguiente posición disponible
   position += 4;
 
-  //Guarda la ultima posicion escrita
-  saveLastPosition();
-  getLastDate();
+  //Guarda la proxima posicion donde escribir
+  EEPROM.put(0, position);
 }
 
-void saveLastPosition () {
-  // Escribir la ultima posición utilizada en la primera posición de la EEPROM
-  EEPROM.write(0, (byte)(position >> 8)); // Escribir el byte más significativo
-  EEPROM.write(1, (byte)position); // Escribir el byte menos significativo
-}
+//codigo para leer el buffer y escribir en la EEPROM o setear la fecha
+void readBuffer () {
+  int buffer;
 
-void getLastPosition () {
-  position = (EEPROM.read(0) << 8) | EEPROM.read(1);
-}
+  for ( ;; ){
+    //Revisa si hay datos en el buffer, (0) para setear el tiempo; (1) para guardar en la EEPROM
+    if(Serial.available() > 0){
+      buffer = Serial.readStringUntil('\n').toInt();
 
-void getLastDate () {
-  if(position > 5) {
-    // Leer el valor de la EEPROM para verificar que se ha guardado correctamente
-    lastDate = (EEPROM.read(2) << 24) | (EEPROM.read(3) << 16) | (EEPROM.read(4) << 8) | EEPROM.read(5);
-
-    // Mostrar el valor leído en el puerto serie
-    Serial.println("Ultima fecha guardada: " + String(lastDate));
+      //Setea el tiempo
+      if(buffer == 0){
+        time = Serial.readStringUntil('\n').toInt();
+      //Escribe el dato
+      } else {
+        writeDate();
+      }
+    }
   }
+  vTaskDelete(NULL);
 }
-
 
 //LA ULTIMA POSICIÓN DE MEMORIA UTILIZADA SE GUARDA AL COMIENZO DE LA EEPROM
-//ESTA UTILIZA LOS 2 PRIMEROS BYTES (0 Y 1).
+//ESTA UTILIZA LOS 2 PRIMEROS BYTES.
 void setup() {
   Serial.begin(9600, SERIAL_8N1);
 
-  // Si la eeprom contiene datos, obtiene la ultima posicion de memoria escrita
+  // Si la eeprom contiene datos, obtiene la ultima posicion de memoria escrita y la fecha guardada
   if (EEPROM.read(0) != 255) {
-    getLastPosition();
+    EEPROM.get(0, position);
+    EEPROM.get(2, time);
   }
 
   //Crea eventos de interrupción para guardar la fecha en la eeprom
@@ -118,6 +118,4 @@ void setup() {
   xTaskCreate(updateTime, "aumentaSegundos", 128, NULL, 0, &xTaskUpdateTime);
 }
 
-void loop() {
-
-}
+void loop() {}
