@@ -158,6 +158,18 @@ def getTime ():
 #Ruta que envia el dato al arduino
 @app.route('/sendTime', methods = ['POST'])
 def sendTime ():
+        # //day
+        # sprintf(day,"%02d", (time / 86400) % 30);
+        # //month
+        # sprintf(month,"%02d", (time / 2592000) % 12);
+        # //year
+        # sprintf(year,"%02d", time / 31104000);
+        # //hour
+        # sprintf(hour,"%02d", (time / 3600) % 24);
+        # //minutes
+        # sprintf(minutes,"%02d", (time / 60) % 60);
+        # //seconds
+        # sprintf(seconds,"%02d", time % 60);
     value = request.form.get('value')
     #Envia el dato al arduino si tuviese uno conectado
     if (arduino != None):
