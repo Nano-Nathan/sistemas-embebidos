@@ -13,21 +13,37 @@
         success: () => { }
       });
     }
+
+    setInterval(() => {
+      //Obtiene los datos del arduino
+      $.ajax({
+        type: 'GET',
+        url: '/getSensorValueTP2',
+        success: oResult => {
+          document.getElementById('id_text').textContent = `La intensidad luminosa detectada es: ${ oResult }`;
+          var x = document.getElementById("id_alert");
+          
+          if (parseInt(oResult) >= 800) {
+            x.style.display = "block";
+          } else {
+            x.style.display = "none";
+          }
+        }
+      });
+    }, 3000);
   </script>
 </head>
 
 <body>
   <center>
-    <h1>La intensidad luminosa detectada es: {{ brightness }}</h1>
+    <h1 id="id_text">La intensidad luminosa detectada es: {{ brightness }}</h1>
     <button onclick="detect(1)">Detectar</button>
     <button onclick="detect(0)">No detectar</button>
     <br>
-    {% if more800 %}
-    <center style="border:1px solid rgb(255, 136, 0);margin:10rem;margin-top:10px;margin-bottom: 10px;">
+    <center id="id_alert" hidden style="border:1px solid rgb(255, 136, 0);margin:10rem;margin-top:10px;margin-bottom: 10px;">
       <h2 style="color:rgb(255, 136, 0);">¡¡ADVERTENCIA!!</h2>
       <h2 style="color:rgb(255, 136, 0);">Se ha detectado una luminosidad mayor a 800.</h2>
     </center>
-    {% endif %}
   </center>
 </body>
 

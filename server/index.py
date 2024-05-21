@@ -9,22 +9,22 @@ from flask import request
 
 app = Flask(__name__)
 
-arduino = None
-# arduino = serial.Serial(
-#     '/dev/ttyACM0',
-#     # 'COM3',
-#     baudrate=9600,
-#     bytesize=serial.EIGHTBITS,
-#     parity=serial.PARITY_NONE,
-#     stopbits=serial.STOPBITS_ONE,
-#     timeout=1,
-#     xonxoff=False,
-#     rtscts=False,
-#     write_timeout=10,
-#     dsrdtr=False,
-#     inter_byte_timeout=None,
-#     exclusive=None
-# )
+#arduino = None
+arduino = serial.Serial(
+    '/dev/ttyACM0',
+    # 'COM3',
+    baudrate=9600,
+    bytesize=serial.EIGHTBITS,
+    parity=serial.PARITY_NONE,
+    stopbits=serial.STOPBITS_ONE,
+    timeout=1,
+    xonxoff=False,
+    rtscts=False,
+    write_timeout=10,
+    dsrdtr=False,
+    inter_byte_timeout=None,
+    exclusive=None
+)
 
 
 
@@ -110,8 +110,9 @@ def to_do ():
     except ValueError as e:
         more800 = (buffer == "active_12")
 
-    return render_template('TP2.html', brightness=brightness, more800=more800)
+    #return render_template('TP2.html', brightness=brightness, more800=more800)
 
+@app.route('/', methods=['GET'])
 @app.route('/TP2', methods=['GET'])
 def tp2():
     global brightness, more800
@@ -134,12 +135,15 @@ def detect ():
 
     return ""
 
+#Ruta que retorna el valor del sensor
+@app.route('/getSensorValueTP2', methods = ['GET'])
+def getSensorValueTP2 ():
+    global brightness
+    return (str)(brightness)
+
 
 ################## METODOS TP3 ##############################
 
-buffer = "23/04/24-00:00:00"
-
-@app.route('/', methods=['GET'])
 @app.route('/TP3', methods=['GET'])
 def tp3():
     #Inicio el thread para leer los datos del arduino
