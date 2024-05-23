@@ -11,8 +11,8 @@ app = Flask(__name__)
 
 #arduino = None
 arduino = serial.Serial(
-    '/dev/ttyACM0',
-    # 'COM3',
+    # '/dev/ttyACM0',
+    'COM8',
     baudrate=9600,
     bytesize=serial.EIGHTBITS,
     parity=serial.PARITY_NONE,
@@ -34,7 +34,8 @@ def do_nothing ():
 
 buffer = 0
 def thread_method (function=do_nothing):
-    global arduino, buffer
+    global arduino
+    global buffer
 
     #Actualiza el valor cada un segundo
     while (True and (arduino != None)):
@@ -42,7 +43,6 @@ def thread_method (function=do_nothing):
             cadena = arduino.readline().decode("utf-8")
             if (cadena != ""):
                 buffer = cadena
-                #Ejecuta una acción custom si debiese
                 function()
         except:
             continue
@@ -112,7 +112,6 @@ def to_do ():
 
     #return render_template('TP2.html', brightness=brightness, more800=more800)
 
-@app.route('/', methods=['GET'])
 @app.route('/TP2', methods=['GET'])
 def tp2():
     global brightness, more800
@@ -144,6 +143,7 @@ def getSensorValueTP2 ():
 
 ################## METODOS TP3 ##############################
 
+@app.route('/', methods=['GET'])
 @app.route('/TP3', methods=['GET'])
 def tp3():
     #Inicio el thread para leer los datos del arduino
@@ -154,30 +154,27 @@ def tp3():
     return render_template('TP3.html')
 
 #Ruta que retorna el tiempo
-@app.route('/getTime', methods = ['GET'])
-def getTime ():
+@app.route('/getTimes', methods = ['GET'])
+def getTimes ():
     global buffer
-    return (str)(buffer)
+    #Espera los datos del arduino
+    while buffer == 0:
+        pass
+    
+    #Guarda los datos a enviar y revierte el buffer para avisar que ya lo leyo
+    cadena = buffer
+    buffer = 0
+
+    #Retorna el valor del arduino
+    return (str)(cadena)
 
 #Ruta que envia el dato al arduino
-@app.route('/sendTime', methods = ['POST'])
-def sendTime ():
-        # //day
-        # sprintf(day,"%02d", (time / 86400) % 30);
-        # //month
-        # sprintf(month,"%02d", (time / 2592000) % 12);
-        # //year
-        # sprintf(year,"%02d", time / 31104000);
-        # //hour
-        # sprintf(hour,"%02d", (time / 3600) % 24);
-        # //minutes
-        # sprintf(minutes,"%02d", (time / 60) % 60);
-        # //seconds
-        # sprintf(seconds,"%02d", time % 60);
+@app.route('/sendOrder', methods = ['POST'])
+def sendOrder ():
     value = request.form.get('value')
     #Envia el dato al arduino si tuviese uno conectado
     if (arduino != None):
-        arduino.write(value).encode("utf-8")
+        arduino.write(value.encode("utf-8"))
     else:
         print("No se ha conectado un arduino")
 

@@ -6,12 +6,12 @@ TaskHandle_t xTaskUpdateTime = NULL;
 TaskHandle_t xTaskReadBuffer = NULL;
 
 //Fecha inicial: 23/04/24
-long int time = 758851200;
+long int time;
 
 //Posicion de memoria inicial
-int position = 2;
+int position;
 
-bool isCleaning = false;
+bool isCleaning;
 
 //Código de la tarea que actualiza el contador
 void updateTime () {
@@ -28,12 +28,7 @@ void updateTime () {
   vTaskDelete(NULL);
 }
 
-void actionPin2 () {
-  writeDate(2);
-}
-void actionPin3 () {
-  writeDate(3);
-}
+
 
 //Código de la interrupción que escribe en la EEPROM
 void writeDate (int eventCall) {
@@ -50,6 +45,14 @@ void writeDate (int eventCall) {
     EEPROM.put(0, position);
   }
 }
+void actionPin2 () {
+  writeDate(2);
+}
+void actionPin3 () {
+  writeDate(3);
+}
+
+
 
 //codigo para leer el buffer y escribir en la EEPROM o setear la fecha
 void readBuffer () {
@@ -84,18 +87,17 @@ void readBuffer () {
 
 void readEEPROM () {
   long int currentTime;
-  int lastEvent = 1,
-    currentPosition = 2;
+  int lastEvent = 1, currentPosition = 2;
   String result = "";
 
-  //Obtiene el evento ocurrido
+  //Inicializa el evento ocurrido
   EEPROM.get(currentPosition, lastEvent);
-  //Obtiene el dato
+  //Inicializa el dato
   EEPROM.get(currentPosition + 2, currentTime);
 
   while (1 <= lastEvent && lastEvent <= 3) {
     //Lo mapea y almacena
-    result += String(lastEvent) + ";" + String(currentTime) + ";";
+    result += String(lastEvent) + ";" + String(currentTime) + "-";
 
     //Obtiene el siguiente evento ocurrido
     currentPosition += 6;
@@ -106,7 +108,11 @@ void readEEPROM () {
     EEPROM.get(currentPosition + 2, currentTime);
   }
 
-  Serial.println(result);
+  if (result == "") {
+    Serial.println("no data");
+  } else {
+    Serial.println(result);
+  }
 }
 
 void clearEEPROM() {
@@ -116,7 +122,6 @@ void clearEEPROM() {
   }
   position = 2;
   isCleaning = false;
-  Serial.println("Limpia");
 }
 
 
@@ -125,10 +130,17 @@ void clearEEPROM() {
 void setup() {
   Serial.begin(9600, SERIAL_8N1);
 
-  // Si la eeprom contiene datos, obtiene la ultima posicion de memoria escrita, quien lo hizo y la fecha guardada
+  isCleaning = false;
+  time = 758851200;
+  position = 2;
+
+  // Si la eeprom contiene datos, obtiene la ultima posicion de memoria escrita y la fecha guardada
   if (EEPROM.read(0) != 255) {
     EEPROM.get(0, position);
-    EEPROM.get(4, time);
+    EEPROM.get(position - 4, time);
+  } else {
+    //Formatea los datos de la eeprom
+    clearEEPROM();
   }
 
   //Crea eventos de interrupción para guardar la fecha en la eeprom

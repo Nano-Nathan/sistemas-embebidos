@@ -4,59 +4,122 @@
 <head>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script>
-    function detect(value) {
-      //Envio los valores al back
+    function setTime (event) {
+      event.preventDefault();
+      const datetimeInput = document.getElementById('datetime').value;
+
+      if (datetimeInput) {
+        //Obtiene fecha y hora
+        let [date, time] = datetimeInput.split("T"),
+          [year, month, day] = date.split("-").map(e => parseInt(e)),
+          [hour, minutes] = time.split(":").map(e => parseInt(e));
+        
+        //Envia el dato al arduino
+        $.ajax({
+          type: 'POST',
+          url: '/sendOrder',
+          data: { value: `0\n${day * 86400 + month * 2592000 + (year - 2000) * 31104000 + hour * 3600 + minutes * 60}\n` },
+          success: () => { document.getElementById('datetime').value = "" }
+        });
+      } else {
+        alert('No date selected.');
+      }
+    }
+
+    function parseTime (time) {
+      let mapping = e => String(Math.round(e)).padStart(2, '0');
+      return `${mapping((time / 86400) % 30)}/${mapping((time / 2592000) % 12)}/${mapping(time / 31104000)} 
+        ${mapping((time / 3600) % 24)}:${mapping((time / 60) % 60)}:${mapping(time % 60)}`;
+    }
+
+    function sendAction (action) {
+      //Envia el dato al arduino
       $.ajax({
         type: 'POST',
-        url: '/detect',
-        data: { value: value },
-        success: () => { }
+        url: '/sendOrder',
+        data: { value: action + "\n"},
+        success: () => {
+          //Si la orden fue obtener datos, los muestra
+          if (action == '2' || action == '3'){
+            //Limpia la tabla
+            let tabla = document.getElementById("eventTable");
+            while (tabla.rows.length > 1) {
+              tabla.deleteRow(1);
+            }
+            if (action == '2'){
+              $.ajax({
+                type: 'GET',
+                url: '/getTimes',
+                success: oResult => {
+                  //Si obtiene datos, los mapea
+                  if (!oResult.includes("no data")){
+                    //Obtiene los registros
+                    oResult.split("-").forEach(sRegister => {
+                      if (sRegister.includes(";")){
+                        //Obtiene el evento y el tiempo
+                        let [event, time] = sRegister.split(";");
+      
+                        //Mapea ambos
+                        // Crea una nueva fila y celdas para la tabla
+                        let row = document.createElement("tr");
+                        let cell1 = document.createElement("td");
+                        let cell2 = document.createElement("td");
+                      
+                        // Asigna los valores a las celdas
+                        cell1.innerHTML = event == "1" ? "Web" : ("Pin n° " + event);
+                        cell2.innerHTML = parseTime(time);
+  
+                        // Añade el estilo para centrar el texto
+                        cell1.style.textAlign = "center";
+                        cell2.style.textAlign = "center";
+                      
+                        // Agrega las celdas a la fila
+                        row.appendChild(cell1);
+                        row.appendChild(cell2);
+                      
+                        // Agrega la fila a la tabla
+                        document.getElementById("eventTable").appendChild(row);
+                      }
+    
+                    });
+                  } else {
+                    alert("No data")
+                  }
+                }
+              });
+            }
+          }
+        }
       });
     }
-
-    function setTime (event) {
-        event.preventDefault();
-        const datetimeInput = document.getElementById('datetime').value;
-
-        if (datetimeInput) {
-            //Obtiene fecha y hora
-            let [date, time] = datetimeInput.split("T"),
-                [year, month, day] = date.split("-").map(e => parseInt(e)),
-                [hour, minutes] = time.split(":").map(e => parseInt(e));
-            
-            //Envia el dato al arduino
-            $.ajax({
-                type: 'POST',
-                url: '/sendTime',
-                data: { value: `0\n${day * 86400 + month * 2592000 + (year - 2000) * 31104000 + hour * 3600 + minutes * 60}\n` },
-                success: () => { document.getElementById('datetime').value = "" }
-            });
-        } else {
-            console.log('No date selected.');
-        }
-    }
-
-    //Metodo para obtener el tiempo del arduino
-    setInterval(() => {
-        $.ajax({
-          type: 'GET',
-          url: '/getTime',
-          success: oResult => {
-            document.getElementById('time').textContent = oResult;
-          }
-        });
-      }, 1000);
   </script>
 </head>
 
 <body>
-  <center>
+  <!-- <center>
     <h1 id="time"></h1>
+  </center> -->
+  <center>
+    <h2>Cambiar fecha</h2>
     <form onsubmit="return setTime(event)">
         <label>Seleccione una fecha: </label>
         <input type="datetime-local" id="datetime">
         <button type="submit">Enviar</button>
     </form>
+    <br>
+    <button onclick="sendAction('1')">Guardar</button>
+    <button onclick="sendAction('2')">Obtener datos</button>
+    <button onclick="sendAction('3')">Limpiar</button>
+  </center>
+  <center>
+    <h2>Datos obtenidos</h2>
+    <table id="eventTable" border="1" style="width:50%">
+      <tr>
+        <th style="width:50%; text-align:center">Evento</th>
+        <th style="width:50%; text-align:center">Tiempo</th>
+      </tr>
+      <!-- Las filas se agregarán aquí -->
+    </table>
   </center>
 </body>
 
