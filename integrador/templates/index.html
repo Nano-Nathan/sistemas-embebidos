@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            sendAction('2');
+        });
+
+        function getValues () {
+            $.ajax({
+                type: 'GET',
+                url: '/getValues',
+                success: sResult => {
+                    //Limpia la tabla
+                    let tabla = document.getElementById("eventTable");
+                    while (tabla.rows.length > 1) {
+                        tabla.deleteRow(1);
+                    }
+                    if (sResult.includes(";")) {
+                        //Obtiene los registros
+                        sResult.split(";").forEach(sPlayer => {
+                            if (parseInt(sPlayer)){
+                                // Crea una nueva fila y celdas para la tabla
+                                let row = document.createElement("tr");
+                                let cell = document.createElement("td");
+    
+                                // Asigna los valores a las celdas
+                                cell.innerHTML = "Jugador número " + sPlayer;
+    
+                                // Añade el estilo para centrar el texto
+                                cell.style.textAlign = "center";
+    
+                                // Agrega las celdas a la fila
+                                row.appendChild(cell);
+    
+                                // Agrega la fila a la tabla
+                                document.getElementById("eventTable").appendChild(row);
+                            }
+                        });
+                    } else if (sResult.includes("Cleaned")){
+                        alert("Se eliminó el registro correctamente!");
+                    }
+                }
+            })
+        }
+        function sendAction(action) {
+            //Envia el dato al arduino
+            $.ajax({
+                type: 'POST',
+                url: '/sendOrder',
+                data: { value: action + "\n" },
+                success: getValues
+            });
+        }
+    </script>
+</head>
+
+<body>
+    <center>
+        <button onclick="sendAction('0')">COMENZAR</button>
+        <button onclick="sendAction('1')">LIMPIAR DATOS</button>
+    </center>
+    <center>
+        <h2>HISTORIAL DE GANADORES</h2>
+        <table id="eventTable" border="1" style="width:50%">
+            <tr>
+                <th style="width:50%; text-align:center">NOMBRE JUGADOR</th>
+            </tr>
+            <!-- Las filas se agregarán aquí -->
+        </table>
+    </center>
+</body>
+
+</html>
