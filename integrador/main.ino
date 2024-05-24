@@ -35,6 +35,8 @@ void readBuffer () {
         vTaskSuspend(xTaskReadBuffer);
       } else if (buffer == 1){
         clearEEPROM();
+      } else if (buffer == 2){
+        readEEPROM();
       }
     }
   }
@@ -45,6 +47,7 @@ void clearEEPROM() {
     EEPROM.write(i, 0);
   }
   lastPosition = 2;
+  Serial.println("Cleaned!");
 }
 
 
@@ -172,7 +175,6 @@ void actionPin3 () {
 void pressButton (int playerID) {
   //Verifica si no existe ganador
   if(bIsGaming && winnerID < 0){
-    Serial.println("Presiona: " + String(playerID));
     winnerID = playerID;
     //Enciende los leds
     for (int i = 0; i < 6; i++) {
@@ -215,7 +217,6 @@ int getRandomPin (){
       newPin = selectedPin;
     }
   }
-  Serial.println("Selecciona: " + String(newPin));
   return newPin;
 }
 // Enciende los leds
@@ -253,9 +254,10 @@ void setup() {
   // Crear el semáforo
   xWinnerSemaphore = xSemaphoreCreateBinary();
 
-  // Si la eeprom contiene datos, obtiene la posicion de memoria a escribir
+  // Si la eeprom contiene datos, obtiene la posicion de memoria a escribir y los muestra
   if (EEPROM.read(0) != 255) {
     EEPROM.get(0, lastPosition);
+    readEEPROM();
   }
 
   //Agrega la lógica de interrupciones
